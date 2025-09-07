@@ -1,0 +1,120 @@
+using Application.Interfaces;
+using Application.Interfaces.Repository.Endpoint;
+using Application.Interfaces.Repository.File;
+using Application.Interfaces.Repository.File.Common.DocumentFile;
+using Application.Interfaces.Repository.File.Common.ImageFile;
+using Application.Interfaces.Repository.File.Common.InvoiceFile;
+using Application.Interfaces.Repository.File.Common.OtherFile;
+using Application.Interfaces.Repository.File.Common.VideoFile;
+using Application.Interfaces.Repository.GrantSupportCategory;
+using Application.Interfaces.Repository.GrantSupports;
+using Application.Interfaces.Repository.Menu;
+using Application.Interfaces.Repository.NewsAnnouncement;
+using Application.Interfaces.Repository.NewsAnnouncementCategory;
+using Application.Interfaces.Repository.ProductGrowingSuggestion;
+using Application.Interfaces.Repository.ProductGrowingSuggestionCategory;
+using Application.Interfaces.Repository.Role;
+using Application.Interfaces.Repository.User;
+using Application.Interfaces.Repository.UserClaim;
+using Application.Interfaces.Repository.UserRole;
+using Application.Interfaces.Service.Auth;
+using Application.Interfaces.Service.NewsAnnouncement;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Persistence.Contexts;
+using Persistence.Repositories;
+using Persistence.Repositories.Endpoint;
+using Persistence.Repositories.File;
+using Persistence.Repositories.File.Common.DocumentFile;
+using Persistence.Repositories.File.Common.ImageFile;
+using Persistence.Repositories.File.Common.InvoiceFile;
+using Persistence.Repositories.File.Common.OtherFile;
+using Persistence.Repositories.File.Common.VideoFile;
+using Persistence.Repositories.GrantSupportCategory;
+using Persistence.Repositories.GrantSupports;
+using Persistence.Repositories.Menu;
+using Persistence.Repositories.NewsAnnoucementCategorys;
+using Persistence.Repositories.NewsAnnouncementCategorys;
+using Persistence.Repositories.NewsAnnouncements;
+using Persistence.Repositories.ProductGrowingSuggestion;
+using Persistence.Repositories.ProductGrowingSuggestionCategory;
+using Persistence.Repositories.Role;
+using Persistence.Repositories.User;
+using Persistence.Repositories.UserClaim;
+using Persistence.Repositories.UserRole;
+using Persistence.Services;
+using Persistence.Services.Auth;
+
+namespace Persistence;
+
+
+public static class ServiceRegistration {
+
+    public static void AddPersistenceServices(this IServiceCollection services, IConfiguration configuration) {
+
+        // HttpContext'e DI ile ulaşabilmek için gerekli
+        services.AddHttpContextAccessor();
+        // System.Console.WriteLine(configuration.GetConnectionString("Default"));
+        // DBContext
+        services.AddDbContext<DefaultContext>(opt => {
+            opt.UseNpgsql(configuration.GetConnectionString("Default"));
+            opt.LogTo(Console.WriteLine, LogLevel.Information);
+        });
+
+        
+        //! Respositories
+        services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
+        services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+        services.AddScoped<IUserCommandRepository, UserCommandRepository>();
+        services.AddScoped<IUserQueryRepository, UserQueryRepository>();
+        services.AddScoped<IRoleQueryRepository, RoleQueryRepository>();
+        services.AddScoped<IRoleCommandRepository, RoleCommandRepository>();
+        services.AddScoped<IUserRoleQueryRepository, UserRoleQueryRepository>();
+        services.AddScoped<IUserRoleCommandRepository, UserRoleCommandRepository>();
+
+        services.AddScoped<INewsAnnouncementQueryRepository, NewsAnnouncementQueryRepository>();
+        services.AddScoped<INewsAnnouncementCommandRepository, NewsAnnouncementCommandRepository>();
+        services.AddScoped<INewsAnnouncementCategoryQueryRepository, NewsAnnouncementCategoryQueryRepository>();
+        services.AddScoped<INewsAnnouncementCategoryCommandRepository, NewsAnnouncementCategoryCommandRepository>();
+        services.AddScoped<IGrantSupportQueryRepository, GrantSupportQueryRepository>();
+        services.AddScoped<IGrantSupportCategoryQueryRepository, GrantSupportCategoryQueryRepository>();
+        services.AddScoped<IGrantSupportCommandRepository, GrantSupportCommandRepository>();
+        services.AddScoped<IGrantSupportCategoryCommandRepository, GrantSupportCategoryCommandRepository>();
+        services.AddScoped<IApplicationUserClaimCommandRepository, ApplicationUserClaimCommandRepository>();
+        services.AddScoped<IApplicationUserClaimQueryRepository, ApplicationUserClaimQueryRepository>();
+        services.AddScoped<IProductGrowingSuggestionQueryRepository, ProductGrowingSuggestionQueryRepository>();
+        services.AddScoped<IProductGrowingSuggestionCommandRepository, ProductGrowingSuggestionCommandRepository>();
+        services.AddScoped<IProductGrowingSuggestionCategoryQueryRepository, ProductGrowingSuggestionCategoryQueryRepository>();
+        services.AddScoped<IProductGrowingSuggestionCategoryCommandRepository, ProductGrowingSuggestionCategoryCommandRepository>();
+        services.AddScoped<IEndpointQueryRepository, EndpointQueryRepository>();
+        services.AddScoped<IEndpointCommandRepository, EndpointCommandRepository>();
+        services.AddScoped<IMenuQueryRepository, MenuQueryRepository>();
+        services.AddScoped<IMenuCommandRepository, MenuCommandRepository>();
+        
+        // File Repository
+        services.AddScoped<IFileQueryRepository, FileQueryRepository>();
+        services.AddScoped<IFileCommandRepository, FileCommandRepository>();
+        services.AddScoped<IDocumentFileQueryRepository, DocumentFileQueryRepository>();
+        services.AddScoped<IDocumentFileCommandRepository, DocumentFileCommandRepository>();
+        services.AddScoped<IImageFileQueryRepository, ImageFileQueryRepository>();
+        services.AddScoped<IImageFileCommandRepository, ImageFileCommandRepository>();
+        services.AddScoped<IInvoiceFileQueryRepository, InvoiceFileQueryRepository>();
+        services.AddScoped<IInvoiceFileCommandRepository, InvoiceFileCommandRepository>();
+        services.AddScoped<IOtherFileQueryRepository, OtherFileQueryRepository>();
+        services.AddScoped<IOtherFileCommandRepository, OtherFileCommandRepository>();
+        services.AddScoped<IVideoFileQueryRepository, VideoFileQueryRepository>();
+        services.AddScoped<IVideoFileCommandRepository, VideoFileCommandRepository>();
+
+
+        //! Services
+        services.AddScoped<ICustomAuthService, CustomAuthService>();
+        services.AddScoped<IUserManagerService, UserManagerService>();
+        services.AddScoped<IRoleManagerService, RoleManagerService>();
+        services.AddScoped<IEndpointManagerService, EndpointManagerService>();
+        services.AddScoped<INewsAnnouncementService, NewsAnnouncementService>();
+
+    }
+
+}

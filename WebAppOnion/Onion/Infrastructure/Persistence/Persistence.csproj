@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Core\Application\Application.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.14" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.14" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.14" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.14" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.14" />
+		<PackageReference Include="X.PagedList" Version="8.4.7" />
+		<PackageReference Include="X.PagedList.Mvc.Core" Version="8.4.7" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
+	</ItemGroup>
+
+</Project>

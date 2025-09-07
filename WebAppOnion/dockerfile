@@ -1,0 +1,23 @@
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as build-stage
+
+WORKDIR /src
+COPY . .
+
+RUN dotnet restore
+RUN dotnet build ./Onion/Presentation/UI/UI.csproj -o ./build -r linux-x64 /p:PublishReadyToRun=true /p:GenerateFullPaths=true
+RUN dotnet publish ./Onion/Presentation/UI/UI.csproj -c Release -o ./publish -r linux-x64 --self-contained true --no-restore /p:PublishTrimmed=true /p:PublishReadyToRun=true /p:PublishSingleFile=true
+
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 as base
+COPY --from=build-stage /src/publish /src/app
+WORKDIR /src/app
+RUN apt-get update &&\
+    apt-get install npm -y &&\
+    npm install
+
+RUN apt-get install curl -y
+
+
+EXPOSE 7094
+HEALTHCHECK --interval=1m --timeout=10s CMD curl --fail http://localhost:7094 || exit 1  
+CMD ["./UI"]

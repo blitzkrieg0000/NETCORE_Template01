@@ -1,0 +1,42 @@
+@model IPagedList<ProductGrowingSuggestionDto>
+
+@{
+    Layout = "_AdminLayout";
+}
+
+@section Head {
+    <link rel="stylesheet" type="text/css" href="~/cork/src/plugins/src/table/datatable/datatables.css">
+    <link rel="stylesheet" type="text/css" href="~/cork/src/plugins/css/light/table/datatable/dt-global_style.css">
+    <link rel="stylesheet" type="text/css" href="~/cork/src/plugins/css/light/table/datatable/custom_dt_custom.css">
+    <link rel="stylesheet" type="text/css" href="~/cork/src/plugins/css/dark/table/datatable/dt-global_style.css">
+    <link rel="stylesheet" type="text/css" href="~/cork/src/plugins/css/dark/table/datatable/custom_dt_custom.css">
+
+    <link href="~/cork/src/plugins/src/animate/animate.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/scrollspyNav.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/components/carousel.css" rel="stylesheet" type="text/css">
+    <link href="~/cork/src/assets/css/light/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/components/tabs.css" rel="stylesheet" type="text/css">
+    <link href="~/cork/src/assets/css/dark/scrollspyNav.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/dark/components/carousel.css" rel="stylesheet" type="text/css">
+    <link href="~/cork/src/assets/css/dark/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/dark/components/tabs.css" rel="stylesheet" type="text/css">
+
+}
+
+
+@* PaginationTable Component *@
+@await Component.InvokeAsync("PaginationTable", new ProductGrowingSuggestionPaginationOptions(Model))
+
+
+@section Script{
+    <script src="~/cork/src/plugins/src/table/datatable/datatables.js"></script>
+    <script src="~/asset/js/DataTable.js"></script>
+    <script src="~/asset/js/CustomModal.js"></script>
+    <script>
+        var message = '@ViewData["ResponseMessage"]';
+        if (message.length > 0) {
+            var notification = alertify.notify(message, 'message', 5, function () {
+            });
+        }
+    </script>
+}

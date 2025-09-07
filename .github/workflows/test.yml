@@ -1,0 +1,83 @@
+name: Test
+
+
+on:
+  push:
+    branches: none # [ main ]
+    tags: none # [ 'v*.*.*' ]
+    
+  # Manuel çalıştırmak için
+  workflow_dispatch:
+      
+      
+env:
+  WORKDIR: WebAppOnion
+  REGISTRY: ghcr.io
+  IMAGE_NAME: blitzkrieg0000/myproject  # ${{ github.repository }}
+  IMAGE_VERSION_TAG: 1.0.${{ github.run_number }}         # Otomatik repository version numarası arttırma
+  SSH_USER: ${{ secrets.SSH_USER }}
+  SSH_KEY: ${{ secrets.SSH_KEY }}
+  SSH_HOST: ${{ secrets.SSH_HOST }}
+  ConnectionStrings__Default: Host=aspnetcore_postgresql;Database=aspnetcore;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Pooling=false;Timeout=300;CommandTimeout=300
+  
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Pull Requestlerin dışında çalışırken sigstore/fulcio ile kimlik sorgulamasını tamamlamak için kullanılır.
+
+
+    steps:
+        # Projeye Runner'dan ulaşabilmeyi sağlar.
+      - name: 1-Checkout project to workspace
+        uses: actions/checkout@v3
+
+
+        # Runner'da SSH bağlantı ayarı yapar ve Runner'ın bağlanacağı makine için ayar dosyası oluşturur.
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/digitalocean.key
+          chmod 600 ~/.ssh/digitalocean.key
+          cat >>~/.ssh/config <<END
+            Host digitalocean
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/digitalocean.key
+            StrictHostKeyChecking no
+          END
+
+        
+      - name: Create deploy.sh
+        run: |
+          mkdir -p ~/temp/
+          echo '#!/bin/bash' > ~/temp/deployment.sh
+          cat >>~/temp/deployment.sh <<END
+            export PROJECT_VERSION=${{env.IMAGE_VERSION_TAG}} &&\
+            docker login ghcr.io -u ${{github.actor}} --password ${{ secrets.GITHUB_TOKEN }} &&\
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_and_push.outputs.digest }} &&\
+            docker compose down -v | echo "" &&\
+            mkdir -p /mnt/myprojectvolume/sql | echo "Folder Exist Ok" &&\
+            mkdir -p /mnt/myprojectvolume/data | echo "Folder Exist Ok" &&\
+            mkdir secrets | echo "Folder Exist Ok" &&\
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > ./secrets/.env &&\
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> ./secrets/.env &&\
+            echo "ConnectionStrings__Default=${{ env.ConnectionStrings__Default }}" >> ./secrets/.env &&\
+            docker compose up -d --build
+          END
+      
+
+      - name: Check SSH & Create KnownHosts
+        run: ssh digitalocean 'whoami'
+
+
+      - name: Droplet - Send Required Items
+        run: |
+          rsync -avuz -e "ssh -i ~/.ssh/digitalocean.key" ./Docker/ $SSH_USER@$SSH_HOST:~/Docker
+          rsync -avuz -e "ssh -i ~/.ssh/digitalocean.key" ~/temp/deployment.sh $SSH_USER@$SSH_HOST:~/Docker
+          ssh digitalocean 'chmod +x ~/Docker/deployment.sh'

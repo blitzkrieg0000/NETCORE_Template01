@@ -1,0 +1,92 @@
+@model NewsAnnouncementCreateViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Haber Ekle";
+}
+
+@section Head{
+    <link href="~/cork/src/plugins/src/animate/animate.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/dark/components/modal.css" rel="stylesheet" type="text/css" />
+}
+
+<form id="defaultForm" asp-controller="NewsAnnouncement" asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3" autocomplete="off">
+    <div class="row">
+        @{
+            await Html.RenderPartialAsync("~/Views/Shared/PartialViews/_CustomModal.cshtml", new ViewDataDictionary(ViewData){
+        {"modal_id", "actionModal"},
+        {"modal_title", "Uyarı"},
+        {"modal_body", "Eklemek istediğinize emin misiniz?"},
+        {"approve_button", "Güncelle"},
+        {"deny_button", "İptal"}
+        });
+        }
+    </div>
+
+    @* <input type="hidden" name="Secret" asp-for=@TempData["Secret"]> *@
+
+    <div class="col-md-12">
+        <label class="form-label">Haber Kategorisi
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.NewsAnnouncementCreateDto.NewsAnnouncementCategoryId" class="text-danger"></span>
+        </label>
+
+        @await Component.InvokeAsync("SelectListDropdown", new SelectListDropdownOptions(){
+        Dto = Model?.NewsAnnouncementCategoryDto,
+        SelectedId = Model?.NewsAnnouncementCreateDto.NewsAnnouncementCategoryId,
+        SelectListName = "NewsAnnouncementCreateDto.NewsAnnouncementCategoryId"
+        })
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">Başlık
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.NewsAnnouncementCreateDto.Title" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.NewsAnnouncementCreateDto.Title" class="form-control">
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">Açıklama
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.NewsAnnouncementCreateDto.Description" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.NewsAnnouncementCreateDto.Description" class="form-control">
+    </div>
+
+    @* <div class="col-md-12">
+    <image src="@Model.NewsAnnouncementCreateDto.Image"></image>
+    </div> *@
+
+
+    <div class="col-md-6">
+        <label class="form-label">Resim Yükle</label>
+        <input type="file" id="files" asp-for="@Model.NewsAnnouncementCreateDto.Files" class="form-control">
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-check-label" for="gridCheck">Aktifleşsin</label>
+        <div id="gridCheck" class="form-check mt-2  mx-1">
+            <input class="form-check-input" type="checkbox" asp-for="@Model.NewsAnnouncementCreateDto.Active">
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#actionModal">Ekle</button>
+    </div>
+
+</form>
+
+
+@section Script{
+    <script src="~/asset/js/CustomModal.js"></script>
+
+    <script>
+        ChangeBreadcrumb({
+            primaryName: "Haberler",
+            primaryLink: "/NewsAnnouncement/List",
+            secondaryName: "Haber Ekle"
+        });
+    </script>
+}

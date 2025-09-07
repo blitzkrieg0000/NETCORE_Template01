@@ -1,0 +1,85 @@
+﻿@model ProductGrowingSuggestionUpdateDto
+
+@{
+    Layout = "_AdminLayout";
+}
+
+@section Head{
+    <link href="~/cork/src/plugins/src/animate/animate.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/dark/components/modal.css" rel="stylesheet" type="text/css" />
+}
+
+<form id="defaultForm" asp-controller="ProductGrowingSuggestion" asp-action="Update" method="post" enctype="multipart/form-data" class="row g-3">
+    <div class="row">
+        @{
+            await Html.RenderPartialAsync("~/Views/Shared/PartialViews/_CustomModal.cshtml", new ViewDataDictionary(ViewData){
+        {"modal_id", "actionModal"},
+        {"modal_title", "Uyarı"},
+        {"modal_body", "Güncellemek istediğinize emin misiniz?"},
+        {"approve_button", "Güncelle"},
+        {"deny_button", "İptal"}
+        });
+        }
+    </div>
+
+    @* <input type="hidden" name="Secret" asp-for=@TempData["Secret"]> *@
+
+    <div class="col-md-12">
+        <label class="form-label">
+            Ürün Yerleştirme Önerisi Kategorisi
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.ProductGrowingSuggestionCategoryId" class="text-danger"></span>
+        </label>
+        @await Component.InvokeAsync("ProductGrowingSuggestionCategoryDropdown", Model?.ProductGrowingSuggestionCategoryId)
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">
+            Başlık
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.Title" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.Title" class="form-control">
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">
+            Açıklama
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.Description" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.Description" class="form-control">
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Dosya</label>
+        <input asp-for="@Model.Image" class="form-control" disabled>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Yükle</label>
+        <input type="file" id="files" name="Files" class="form-control">
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-check-label" for="gridCheck">Aktiflik Durumu</label>
+        <div id="gridCheck" class="form-check mt-2  mx-1">
+            <input class="form-check-input" type="checkbox" asp-for="@Model.Active">
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#actionModal">Güncelle</button>
+    </div>
+
+</form>
+
+
+@section Script{
+    <script src="~/asset/js/CustomModal.js"></script>
+    @* Validation *@
+    <script src="~/node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="~/node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/node_modules/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+}

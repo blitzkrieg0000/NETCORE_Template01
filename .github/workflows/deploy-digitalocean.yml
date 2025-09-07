@@ -1,0 +1,146 @@
+name: Build & Deploy To Digital Ocean Droplet v2
+
+
+on:
+  push:
+    branches: none # [ main ]
+    tags: none # [ 'v*.*.*' ]
+    
+  # Manuel çalıştırmak için
+  workflow_dispatch:
+      
+      
+env:
+  WORKDIR: WebAppOnion
+  EXTERNAL_VOLUME_NAME: myprojectvolume
+  REGISTRY: ghcr.io
+  IMAGE_NAME: blitzkrieg0000/myproject  # ${{ github.repository }}
+  IMAGE_VERSION_TAG: 1.0.${{ github.run_number }}         # Otomatik repository version numarası arttırma
+  ConnectionStrings__Default: Host=aspnetcore_postgresql;Database=aspnetcore;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Pooling=true;Timeout=300;CommandTimeout=300
+  SSH_USER: ${{ secrets.SSH_USER }}
+  SSH_KEY: ${{ secrets.SSH_KEY }}
+  SSH_HOST: ${{ secrets.SSH_HOST }}
+
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Pull Requestlerin dışında çalışırken sigstore/fulcio ile kimlik sorgulamasını tamamlamak için kullanılır.
+
+
+    steps:
+        # Projeye Runner'dan ulaşabilmeyi sağlar.
+      - name: 1-Checkout project to workspace
+        uses: actions/checkout@v3
+
+
+        # Oluşturulan Docker imajlarının Fulcio tarafından imzalanmasını sağlar.
+      - name: 2-Install Cosign tool
+        uses: sigstore/cosign-installer@main
+    
+
+        # Docker ile build yapabilmemizi sağlar. "build-push-action" için kurulması önerilir ve zorunlu değildir.
+      - name: 3-Install docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+
+        # Docker ile herhangi bir container registry'ye login yapabilmemizi sağlar.
+      - name: 4-Login container registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
+        
+        # Varsayılan github repository'sini kullanarak oluşturulacak imaj için çeşitli metadata'lara ulaşmamızı sağlar.
+      - name: 5-Install docker metadata tool
+        id: meta
+        uses: docker/metadata-action@v4.3.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          
+          
+        # Context olarak verilen konumdaki dockerfile.yml dosyasını build eder ve ayarlanan registry'ye pushlar.
+      - name: 6-Build and push docker image (if !PR)
+        id: build_and_push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.WORKDIR }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION_TAG }}  #! Tag:${{ steps.meta.outputs.tags }} 
+          labels: ${{ steps.meta.outputs.labels }}
+
+        
+        # Cosign ile oluşan image imzalanır.
+      - name: 7-Sign the published docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: cosign sign ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_and_push.outputs.digest }}
+          
+      
+      # #! Digital Ocean hesabını yönetmek için kullanılır.
+      # - name: Login Digital Ocean
+      #   uses: digitalocean/action-doctl@v2.3.0
+      #   with:
+      #     token: ${{ secrets.DIGITAL_OCEAN_TOKEN }}
+      #   run: doctl compute ssh aspnetcore --ssh-user dgh --ssh-command 'export CR_PAT=${{ secrets.GITHUB_TOKEN }}'
+  
+
+        # Runner'da SSH bağlantı ayarı yapar.
+      - name: 8-Configure - SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/digitalocean.key
+          chmod 600 ~/.ssh/digitalocean.key
+          cat >>~/.ssh/config <<END
+            Host digitalocean
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/digitalocean.key
+            StrictHostKeyChecking no
+          END
+
+
+      - name: 9-Create - deploy.sh
+        run: |
+          mkdir -p ~/temp/
+          echo '#!/bin/bash' > ~/temp/deployment.sh
+          cat >>~/temp/deployment.sh <<END
+            export PROJECT_VERSION=${{env.IMAGE_VERSION_TAG}} &&\
+            docker login ghcr.io -u ${{github.actor}} --password ${{ secrets.GITHUB_TOKEN }} &&\
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_and_push.outputs.digest }} &&\
+            mkdir -p /mnt/${{ env.EXTERNAL_VOLUME_NAME }}/sql | echo "sql Folder Exist" &&\
+            mkdir -p /mnt/${{ env.EXTERNAL_VOLUME_NAME }}/data | echo "data Folder Exist" &&\
+            mkdir secrets | echo "Folder Exist Ok" &&\
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > ./secrets/.env &&\
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> ./secrets/.env &&\
+            echo "ConnectionStrings__Default=${{ env.ConnectionStrings__Default }}" >> ./secrets/.env &&\
+            docker compose up -d --build
+          END
+      
+
+        # Docker-Stack veya Kubernetes'e geçene kadar:
+      - name: 10-Check SSH & Create KnownHosts && Docker Compose Down
+        run: ssh digitalocean '(cd ~/Docker | mkdir Docker | echo "Docker Folder Exist") && docker compose down -v | echo "Docker Compose Yok"'
+
+
+      - name: 11-Droplet - Send Files
+        run: |
+          rsync -avuz -e "ssh -i ~/.ssh/digitalocean.key" ./Docker/ $SSH_USER@$SSH_HOST:~/Docker
+          rsync -avuz -e "ssh -i ~/.ssh/digitalocean.key" ~/temp/deployment.sh $SSH_USER@$SSH_HOST:~/Docker
+
+
+      - name: 12-Droplet - Deploy
+        run : ssh digitalocean 'cd ~/Docker && chmod +x ./deployment.sh && ./deployment.sh'
+      
+      
+      # - name: Droplet - Clean Up
+      #   run: ssh digitalocean 'rm -rf ./secrets'

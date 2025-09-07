@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Application\Application.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.14" />
+    <PackageReference Include="BouncyCastle" Version="1.8.9" />
+    <PackageReference Include="Twilio" Version="6.4.0" />
+    <PackageReference Include="ASPSMS" Version="0.0.2" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.111" />
+  </ItemGroup>
+
+</Project>

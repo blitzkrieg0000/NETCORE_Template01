@@ -1,0 +1,139 @@
+version: '3.8'
+services:
+    #! CONTAINER SERVICES
+    aspnetcore_postgresql:
+        image: postgres:latest
+        hostname: aspnetcore_postgresql
+        container_name: aspnetcore_postgresql
+        restart: always
+        stop_grace_period: 3m30s
+        shm_size: 256mb
+        networks:
+            - aspnetcore_network
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: aspnetcore
+            PGDATA: /var/lib/postgresql/data/pgdata
+            POSTGRES_HOST_AUTH_METHOD: trust
+        volumes:
+            - aspnetcore_droplet_volume_postgres:/var/lib/postgresql/data
+        env_file:
+            - ./secrets/.env
+
+
+    aspnetcore_webapp:
+        image: ghcr.io/blitzkrieg0000/myproject:${PROJECT_VERSION}
+        depends_on:
+            - aspnetcore_postgresql
+        hostname: aspnetcore_webapp
+        restart: always
+        environment:
+            - ASPNETCORE_URLS=http://*:7094
+        networks:
+            - aspnetcore_network
+        expose:
+          - "7094"
+        env_file:
+            - ./secrets/.env
+        volumes:
+          - aspnetcore_droplet_volume_uploads:/src/app/wwwroot/data
+        #   - aspnetcore_dataprotectionkeys:/root/.aspnet/DataProtection-Keys
+        deploy:
+            mode: replicated
+            replicas: 4
+            endpoint_mode: vip
+
+    nginx:
+        image: nginx:alpine
+        hostname: 'nginx'
+        container_name: nginx
+        volumes:
+          - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+          - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
+          - ./nginx/logs/:/var/log/nginx/
+          - ./nginx/ssl/fullchain.pem:/etc/ssl/certs/fullchain.pem
+          - ./nginx/ssl/server.key:/etc/ssl/private/server.key
+        depends_on:
+            - aspnetcore_webapp
+        ports: 
+          - '80:80'
+          - '443:443'
+        restart: always
+        networks:
+            - aspnetcore_network
+
+
+    redis:
+        image: redis
+        hostname: redis
+        container_name: redis
+        restart: always
+        networks:
+            - aspnetcore_network
+        expose:
+            - "6379"
+        depends_on:
+            - aspnetcore_webapp
+
+
+    # redis-commander:
+    #     container_name: redis-commander
+    #     hostname: redis-commander
+    #     image: rediscommander/redis-commander:latest
+    #     restart: always
+    #     networks:
+    #         - aspnetcore_network
+    #     environment:
+    #         - REDIS_HOSTS=redis
+    #     ports:
+    #         - "8081:8081"
+
+
+    # aspnetcore_seq:
+    #     image: datalust/seq:latest
+    #     container_name: aspnetcore_seq
+    #     environment:
+    #         ACCEPT_EULA: "Y"
+    #     ports:
+    #         - "5341:80"
+    #     restart: always
+    #     networks:
+    #         - aspnetcore_network
+
+
+#! VOLUMES
+volumes:
+    # aspnetcore_local_volume:
+    #     driver: local
+    #     driver_opts:
+    #         o: bind
+    #         type: none
+    #         device: "/mnt/myprojectvolume/sql"
+            
+    aspnetcore_droplet_volume_postgres:
+        driver: local
+        driver_opts:
+            o: bind
+            type: none
+            device: "/mnt/myprojectvolume/sql"
+
+    aspnetcore_droplet_volume_uploads:
+        driver: local
+        driver_opts:
+            o: bind
+            type: none
+            device: "/mnt/myprojectvolume/data"
+
+    aspnetcore_dataprotectionkeys:
+        driver: local
+        driver_opts:
+            o: bind
+            type: none
+            device: "/mnt/myprojectvolume/dataprotectionkeys"
+
+#! NETWORK
+networks:
+    aspnetcore_network:
+        driver: bridge
+           

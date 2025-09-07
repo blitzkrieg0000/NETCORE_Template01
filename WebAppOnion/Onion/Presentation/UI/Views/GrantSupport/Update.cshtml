@@ -1,0 +1,120 @@
+﻿@model GrantSupportUpdateDto
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = "Hibe & Destek Güncelle";
+}
+
+@section Head{
+    <link href="~/cork/src/plugins/src/animate/animate.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/light/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/assets/css/dark/components/modal.css" rel="stylesheet" type="text/css" />
+    <link href="~/cork/src/plugins/src/glightbox/glightbox.min.css" rel="stylesheet" type="text/css" />
+}
+
+<form id="defaultForm" asp-controller="GrantSupport" asp-action="Update" method="post" enctype="multipart/form-data" class="row g-3" autocomplete="off">
+    <div class="row">
+        @{
+            await Html.RenderPartialAsync("~/Views/Shared/PartialViews/_CustomModal.cshtml", new ViewDataDictionary(ViewData){
+        {"modal_id", "actionModal"},
+        {"modal_title", "Uyarı"},
+        {"modal_body", "Güncellemek istediğinize emin misiniz?"},
+        {"approve_button", "Güncelle"},
+        {"deny_button", "İptal"}
+        });
+        }
+    </div>
+
+    @* <input type="hidden" name="Secret" asp-for=@TempData["Secret"]> *@
+    <input type="hidden" asp-for="@Model.Id">
+    <div class="col-md-12">
+        <label class="form-label">
+            Haber Kategorisi
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.GrantSupportCategoryId" class="text-danger"></span>
+        </label>
+        @await Component.InvokeAsync("GrantSupportCategoryDropdown", Model?.GrantSupportCategoryId)
+    </div>
+
+    <div class="col-md-8">
+        <label class="form-label">Başlık
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.Title" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.Title" class="form-control">
+    </div>
+
+    <div class="col-md-8">
+        <label class="form-label">Açıklama
+            <span class="text-danger">*</span>
+            <span asp-validation-for="@Model.Description" class="text-danger"></span>
+        </label>
+        <input asp-for="@Model.Description" class="form-control">
+    </div>
+
+    <div class="col-md-8">
+        <label class="form-label">Yükle</label>
+        <input type="file" id="files" asp-for="@Model.Files" class="form-control">
+    </div>
+
+    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 mb-6">
+        <a id="outerImage" href="~/@Model.Image" class="defaultGlightbox glightbox-content">
+            <img src="~/@Model.Image" alt="image" class="img-fluid" />
+        </a>
+        @Html.HiddenFor(x=>x.Image)
+    </div>
+
+    <div class="col-md-8">
+        <label class="form-check-label" for="gridCheck">Aktiflik Durumu</label>
+        <div id="gridCheck" class="form-check mt-2  mx-1">
+            <input class="form-check-input" type="checkbox" asp-for="@Model.Active">
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#actionModal">Güncelle</button>
+    </div>
+
+</form>
+
+
+@section Script{
+    <script type="text/javascript">
+        /*Input ile yüklenen resmi glightbox ile Göster*/
+        $(document).on("change", "#files", function () {
+            var holder = $("#outerImage");
+            var files = !!this.files ? this.files : [];
+            if (!files.length || !window.FileReader) {
+                return;
+            }
+            if (/^image/.test(files[0].type)) {
+                var reader = new FileReader();
+                reader.readAsDataURL(files[0])
+                reader.onloadend = function () {
+
+                    $(holder).find("img")
+                        .attr("src", this.result)
+                        .attr("draggable", "false")
+                        .click(false);
+                };
+            }
+        });
+    </script>
+
+    <script>
+        ChangeBreadcrumb({
+            primaryName: "Hibe & Destek",
+            primaryLink: "/GrantSupport/List",
+            secondaryName: "Hibe & Destek Güncelle"
+        });
+    </script>
+
+    <script src="~/asset/js/CustomModal.js"></script>
+    @* Validation *@
+    <script src="~/node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="~/node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/node_modules/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="~/cork/src/plugins/src/glightbox/glightbox.min.js"></script>
+    <script src="~/cork/src/plugins/src/glightbox/custom-glightbox.min.js"></script>
+}

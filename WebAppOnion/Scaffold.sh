@@ -1,0 +1,1 @@
+dotnet ef dbcontext scaffold "Host=localhost;Database=aspnetcore;Username=aspnetcore;Password=aspnetcore" Npgsql.EntityFrameworkCore.PostgreSQL -o ../../Infrastructure/Persistence/Scaffold --project ./Onion/Presentation/UI/UI.csproj
