@@ -1,4 +1,4 @@
-# Tarım Projesi
+# Template Dotnet Core Projesi
 
 ## Proje Özeti
 ```
