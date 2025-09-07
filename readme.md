@@ -2,7 +2,7 @@
 
 # KURULUM
 
-![REHBER](https://github.com/blitzkrieg0000/NETCORE_Template01/tree/main/WebAppOnion)
+[REHBER](https://github.com/blitzkrieg0000/NETCORE_Template01/tree/main/WebAppOnion)
 
 
 ## Proje Özeti
