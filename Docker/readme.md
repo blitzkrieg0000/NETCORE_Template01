@@ -297,14 +297,14 @@ volumes:
         driver_opts:
             o: bind
             type: none
-            device: "/mnt/myprojectprojectvolume/sql"
+            device: "/mnt/myprojectvolume/sql"
 
     aspnetcore_droplet_volume_uploads:
         driver: local
         driver_opts:
             o: bind
             type: none
-            device: "/mnt/myprojectprojectvolume/data"
+            device: "/mnt/myprojectvolume/data"
 
 #! NETWORK
 networks:
@@ -446,7 +446,7 @@ jobs:
 
       - name: Droplet - Create Secrets and Required Things
         run: |
-          ssh digitalocean 'mkdir -p /mnt/myprojectprojectvolume/sql | echo "File Exist Ok"'
+          ssh digitalocean 'mkdir -p /mnt/myprojectvolume/sql | echo "File Exist Ok"'
           ssh digitalocean 'mkdir secrets | echo "File exist, ok"'
           ssh digitalocean 'echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" > ./secrets/.env'
           ssh digitalocean 'echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> ./secrets/.env'
